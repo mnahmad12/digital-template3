@@ -7,6 +7,7 @@ function preload() {
 }	
 
 var wall;
+var car;
 
 function create() {
 
@@ -17,8 +18,6 @@ function create() {
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
 	wall = game.add.sprite(95, 95, 'wall');
-	
-	
     car = game.add.sprite(game.world.centerX, game.world.centerY, 'car');
 
 	
