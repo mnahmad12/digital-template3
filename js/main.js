@@ -1,80 +1,180 @@
-var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'game', { preload: preload, create: create, update: update});
+var game = new Phaser.Game(1200, 600, Phaser.CANVAS, 'game', { preload: preload, create: create, update: update});
 
 function preload() {
 
     game.load.image('wall','assets/block.png');
-    game.load.image('car','assets/car.png')
+    game.load.image('dude','assets/phaser-dude.png');
+	game.load.spritesheet('policedude','assets/cops.png');
+	game.load.image('bag','assets/money.png');
+	game.load.bitmapFont('desyrel', 'assets/desyrel.png', 'assets/desyrel.xml');
 }	
 
 var wall;
-var car;
+var dude;
+var cop;
+var bag;
+var score=0;
+var text;
+var winText;
+var loseText;
+
 
 function create() {
 
 	
-	//bounds of the world
-    game.world.setBounds(0, 0, 1920, 1920);
+	
+	text = game.add.bitmapText(50, 50, 'desyrel','Collect the Money, Avoid the Cops!',32);
+	
+	game.world.setBounds(0,0,1200,600);
 	//physics
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
-	wall = game.add.sprite(95, 95, 'wall');
-    car = game.add.sprite(game.world.centerX, game.world.centerY, 'car');
-
+	wall=game.add.group();
+	wall.enableBody=true;
 	
-	//  And add 10 sprites to it
-    for (var i = 0; i < 10; i++)
+	bag=game.add.group();
+	bag.enableBody=true;
+	
+    dude = game.add.sprite(game.world.centerX, game.world.centerY, 'dude');
+	
+	cop=game.add.sprite(1100,200,'policedude',0);
+	
+	
+	
+	for (var i = 0; i < 6; i++)
     {
-        //  Create a new sprite at a random world location
-        wall.create(game.world.randomX, game.world.randomY,'wall');
+        //  They are evenly spaced out on the X coordinate, with a random Y coordinate
+        var wallItem=wall.create(game.rnd.integerInRange(90,1110), game.rnd.integerInRange(90,510), 'wall', null);
+		if(game.physics.arcade.overlap(wallItem,dude,null,null,this))
+			{
+				wallItem.exists=false;
+				i--;
+			}
+		wallItem.body.immovable =true;
+		
 		
     }
 	
+	for(var i=0;i<50;i++)
+	{
+		var bagItem=bag.create(game.rnd.integerInRange(90,1110), game.rnd.integerInRange(90,510), 'bag', null)
+		if(game.physics.arcade.overlap(bagItem,wall,null,null,this))
+			{
+				bagItem.exists=false;
+				i--;
+			}
+	}
+	
+	game.physics.arcade.enable(bag);
+	game.physics.arcade.enable(cop);
     game.physics.arcade.enable(wall);
-	game.physics.arcade.enable(car);
+	game.physics.enable(dude, Phaser.Physics.ARCADE);
+	
+	
+	dude.body.collideWorldBounds = true;
+	dude.body.bounce.set(1);
+	cop.body.collideWorldBounds = true;
+	cop.body.bounce.set(1);
 	
     cursors = game.input.keyboard.createCursorKeys();
+	
+	
 
-    game.camera.follow(player);
-
-
+	
 	
 }
 
 function update() {
 
-    //player.body.setZeroVelocity();
-	car.body.velocity.x=0;
-	car.body.velocity.y=0;
+    
+	
+	if(score==50)
+	{
+		game.paused=true;
+		winText = game.add.bitmapText(500, 500, 'desyrel','You Win!',52);
+	}
+	
+	dude.body.velocity.x=0;
+	dude.body.velocity.y=0;
+	dude.body.bounce.set(1);
+	
+	cop.body.velocity.x=0;
+	cop.body.velocity.y=0;
+	
+	
+	
 	
     if (cursors.up.isDown)
     {
-        car.body.velocity.y=-200;
+		
+        dude.body.velocity.y=-150;
+		cop.body.velocity.y=-390
+		
     }
     else if (cursors.down.isDown)
     {
-        car.body.velocity.y=200;
+        dude.body.velocity.y=150;
+		cop.body.velocity.y=350
+		
     }
 
-    if (cursors.left.isDown)
+    else if (cursors.left.isDown)
     {
-        car.body.velocity.x = -200;
+		
+        dude.body.velocity.x = -150;
+		cop.body.velocity.x=-330
+		
     }
     else if (cursors.right.isDown)
     {
-        car.body.velocity.x=200;
+			
+		dude.body.velocity.x=150;
+		cop.body.velocity.x=370
+		
+		
     }
 	
-
-	if(game.physics.arcade.overlap(car,wall,null,null,this))
-			{
-				game.physics.arcade.collide(car,wall);
-				car.body.bounce.set(1);
-			}
-			
+	if(game.physics.arcade.overlap(dude,wall,null,null,this))
+	{
+		game.physics.arcade.collide(wall,dude);
+	}
+	
+	if(game.physics.arcade.overlap(cop,wall,null,null,this))
+	{
+		game.physics.arcade.collide(wall,cop);
+	}
+	
+	if(game.physics.arcade.overlap(cop,dude,null,null,this))
+	{
+		//lose!
+		game.paused=true;
+		loseText = game.add.bitmapText(500, 500, 'desyrel','You Lose, Refresh=Replay!',52);
+	}
+	
+	if(game.physics.arcade.overlap(dude,bag,null,null,this))
+		{
+			game.physics.arcade.collide(dude, bag, collisionHandler, null, this);
+		}
+		
+	
+	
 	
  
 }
+
+
+
+function collisionHandler (player, mon) {
+
+
+    
+    mon.kill();
+	mon.exists=false;
+    score++;
+
+}
 	
+
 
 
 
